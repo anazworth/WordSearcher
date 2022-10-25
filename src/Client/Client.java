@@ -1,7 +1,9 @@
 package Client;
 
+import javax.swing.*;
+
 public class Client {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        SwingUtilities.invokeLater(ClientView::new);
     }
 }

@@ -1,17 +1,21 @@
 package Server;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class Server {
     final static int PORT = 8080;
     public static void main(String[] args) {
 
+        listenForConnections();
+
+        System.out.println("Server shutting down...");
+    }
+
+    private static void listenForConnections() {
         boolean serverRunning = true;
 
         try (ServerSocket server = new ServerSocket(PORT)) {
@@ -22,20 +26,19 @@ public class Server {
                 System.out.println("Client connected from " + socket.getInetAddress());
 
                 InputStream in = socket.getInputStream();
-                OutputStream out = socket.getOutputStream();
+                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
                 int dataLength = in.read();
                 byte[] data = new byte[dataLength];
-                String word = new String(data);
+                int read = in.read(data);
+                String word = new String(data, StandardCharsets.UTF_8);
 
-                System.out.println("Client requested word: " + word);
+                System.out.println("Client [" + socket.getInetAddress() + "] requested word: " + word);
                 serverRunning = !word.equals(":q");
 
                 List<Integer> result = searchForWord(word);
 
                 sendResult(out, result);
-
-                socket.close();
             }
         } catch (Exception e) {
             System.out.println("Error: Failed to start server");
@@ -44,11 +47,8 @@ public class Server {
         }
     }
 
-    private static void sendResult(OutputStream out, List<Integer> result) throws IOException {
-        out.write(result.size());
-        for (Integer integer : result) {
-            out.write(integer);
-        }
+    private static void sendResult(ObjectOutputStream out, List<Integer> result) throws IOException {
+        out.writeObject(result);
     }
 
     private static List<Integer> searchForWord(String word) {

@@ -9,6 +9,7 @@ import java.util.List;
 public class WordSearcher {
 
     List<String> text;
+
     public WordSearcher(File file) {
         try {
             this.text = Files.readAllLines(file.toPath());

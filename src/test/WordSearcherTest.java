@@ -1,4 +1,4 @@
-package Server.test;
+package test;
 
 import Server.WordSearcher;
 
