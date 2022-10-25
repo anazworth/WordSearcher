@@ -1,25 +1,28 @@
 package Server;
 
 import java.io.*;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class Server {
-    final static int PORT = 8080;
+    final static int PORT = 8080; // Set port number here
+    static File file = new File("src/Server/hamlet.txt"); // Set file path here
     public static void main(String[] args) {
 
-        listenForConnections();
+        listenForConnections(PORT);
 
         System.out.println("Server shutting down...");
     }
 
-    private static void listenForConnections() {
+    @SuppressWarnings("ResultOfMethodCallIgnored") // The result of read() is not needed
+    private static void listenForConnections(int port) {
         boolean serverRunning = true;
 
-        try (ServerSocket server = new ServerSocket(PORT)) {
-            System.out.println("Server started on port " + PORT);
+        try (ServerSocket server = new ServerSocket(port)) {
+            System.out.println("Server started on port " + port);
 
             while (serverRunning) {
                 Socket socket = server.accept();
@@ -30,7 +33,7 @@ public class Server {
 
                 int dataLength = in.read();
                 byte[] data = new byte[dataLength];
-                int read = in.read(data);
+                in.read(data);
                 String word = new String(data, StandardCharsets.UTF_8);
 
                 System.out.println("Client [" + socket.getInetAddress() + "] requested word: " + word);
@@ -42,8 +45,14 @@ public class Server {
             }
         } catch (Exception e) {
             System.out.println("Error: Failed to start server");
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            if (e instanceof BindException) {
+                System.out.println("Error: Port " + PORT + " is already in use");
+                listenForConnections(PORT + 1); // If port 8080 is taken, try the next port recursively
+            } else {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+
         }
     }
 
@@ -52,7 +61,7 @@ public class Server {
     }
 
     private static List<Integer> searchForWord(String word) {
-        WordSearcher searcher = new WordSearcher(new File("src/Server/hamlet.txt"));
+        WordSearcher searcher = new WordSearcher(file);
         return searcher.search(word);
     }
 }
